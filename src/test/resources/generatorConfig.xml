@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+	"http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+	<properties url="file:./src/test/resources/generatorConfig.properties"/>
+
+	<!--
+	http://mybatis.github.io/generator/configreference/xmlconfig.html
+	-->
+	
+	<context id="oracle" targetRuntime="MyBatis3">
+		<!-- http://mybatis.github.io/generator/configreference/commentGenerator.html -->
+		
+		<plugin type="org.mybatis.generator.plugins.LazybonesPlugin">
+			<property name="commentOut" value="true"/>
+		</plugin>
+		
+		<commentGenerator type="org.mybatis.generator.plugins.LazybonesCommentGenerator">
+<!-- 			<property name="suppressDate" value="true" /> -->
+		</commentGenerator>
+
+		<!-- http://mybatis.github.io/generator/configreference/jdbcConnection.html -->
+		<jdbcConnection driverClass="${jdbc.driver}"
+			connectionURL="${jdbc.url}"
+			userId="${jdbc.username}"
+			password="${jdbc.password}">
+			<property name="remarksReporting" value="true"/>
+		</jdbcConnection>
+
+		<javaTypeResolver >
+			<property name="forceBigDecimals" value="true" />
+		</javaTypeResolver>
+
+		<javaModelGenerator targetPackage="com.myproject.model" targetProject="target">
+			<property name="enableSubPackages" value="false" />
+			<property name="trimStrings" value="true" />
+		</javaModelGenerator>
+
+		<sqlMapGenerator targetPackage="com.myproject.xml"  targetProject="target">
+			<property name="enableSubPackages" value="false" />
+		</sqlMapGenerator>
+
+		<javaClientGenerator type="XMLMAPPER" targetPackage="com.myproject.dao"  targetProject="target">
+			<property name="enableSubPackages" value="false" />
+		</javaClientGenerator>
+
+		<table tableName="MS_SEND_MESSAGE" domainObjectName="SendMessage">
+			<generatedKey column="SEND_MESSAGE_ID" sqlStatement="SELECT SEQ_PT_SCOURT_ISSUE_HIST.NEXTVAL FROM DUAL"/>
+			<columnOverride column="SEND_MESSAGE_ID" property="identifier" />
+			<columnOverride column="SENDER_CE_ADDR" property="sender" />
+			<columnOverride column="RECEIVER_CE_ADDR" property="receiver" />
+			<columnOverride column="RETRY_CNT" javaType="Integer" />
+			<columnOverride column="FILE_SIZE" javaType="Long"/>
+			
+			<columnOverride column="REG_DATE">
+				<property name="insert" value="systimestamp"/>
+			</columnOverride>
+			<columnOverride column="UPDATE_DATE">
+				<property name="insert" value="systimestamp"/>
+				<property name="update" value="systimestamp"/>
+			</columnOverride>
+
+			<columnOverride column="INBOX_SEQ" javaType="java.math.RoundingMode" typeHandler="org.apache.ibatis.type.EnumOrdinalTypeHandler"/>
+		</table>
+	</context>
+</generatorConfiguration>
+

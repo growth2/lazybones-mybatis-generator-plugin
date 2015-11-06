@@ -1,0 +1,4 @@
+jdbc.driver=oracle.jdbc.driver.OracleDriver
+jdbc.url=REPLACE
+jdbc.username=REPLACE
+jdbc.password=REPLACE
