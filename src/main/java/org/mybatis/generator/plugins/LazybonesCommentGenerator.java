@@ -20,7 +20,6 @@ import org.mybatis.generator.api.dom.java.InnerClass;
 import org.mybatis.generator.api.dom.java.InnerEnum;
 import org.mybatis.generator.api.dom.java.JavaElement;
 import org.mybatis.generator.api.dom.java.Method;
-import org.mybatis.generator.api.dom.java.Parameter;
 import org.mybatis.generator.api.dom.xml.TextElement;
 import org.mybatis.generator.api.dom.xml.XmlElement;
 import org.mybatis.generator.config.Context;
@@ -168,7 +167,9 @@ public class LazybonesCommentGenerator extends DefaultCommentGenerator implement
 			method.addJavaDocLine(" * " + line);
 		}
 		method.addJavaDocLine(" *"); 
-		method.addJavaDocLine(" * " + getMessage("return", args(introspectedTable, introspectedColumn)));
+		for(String line : getMessageLines("return", args(introspectedTable, introspectedColumn))) {
+			method.addJavaDocLine(" * " + line);
+		}
 		addJavadocTag(method, false);
 		method.addJavaDocLine(" */"); 
 	}
@@ -179,20 +180,36 @@ public class LazybonesCommentGenerator extends DefaultCommentGenerator implement
 		
 		method.addJavaDocLine("/**"); 
 		
-		Object[] a = args(introspectedTable, introspectedColumn);
+		Object[] args = args(introspectedTable, introspectedColumn);
 		
-		for(String line : getMessageLines("setter.comment", a)) {
+		for(String line : getMessageLines("setter.comment", args)) {
 			method.addJavaDocLine(" * " + line);
 		}
 		method.addJavaDocLine(" *"); 
 		
-		Parameter parm = method.getParameters().get(0);
+		// Parameter parm = method.getParameters().get(0);
 
-		for(String line : getMessageLines("param", new Object[] {a[0], a[1], a[2], a[3], a[4], a[5], parm.getName()})) {
+		for(String line : getMessageLines("param", args)) {
 			method.addJavaDocLine(" * " + line);
 		}
 		addJavadocTag(method, false);
-		method.addJavaDocLine(" */"); 
+		method.addJavaDocLine(" */");
+	}
+	
+	private String toJdbcTypeName(IntrospectedColumn c) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(c.getJdbcTypeName());
+//		switch(introspectedColumn.getJdbcType()) {
+//		case java.sql.Types.DECIMAL
+		
+		if(c.getLength()>0) {
+			sb.append('(').append(c.getLength());
+			if(c.getScale()>0) {
+				sb.append(',').append(c.getScale());
+			}
+			sb.append(')');
+		}
+		return sb.toString();
 	}
 
 	@Override
@@ -264,17 +281,29 @@ public class LazybonesCommentGenerator extends DefaultCommentGenerator implement
 
 	
 	private Object[] args(IntrospectedTable introspectedTable) {
-		String name = introspectedTable.getFullyQualifiedTable().toString();
+		String name = introspectedTable.getFullyQualifiedTableNameAtRuntime().toString();
 		String comment = getTableRemarks(introspectedTable.getFullyQualifiedTable().toString());
-		int args = comment==null ? 1 : 2;
-		return new Object[] { args, name, comment };
+		return new Object[] { 
+				name, // 0
+				comment==null ? 0 : 1, comment // 1, 2 
+			};
 	}
 
 	private Object[] args(IntrospectedColumn introspectedColumn) {
 		String name = introspectedColumn.getActualColumnName();
 		String comment = introspectedColumn.getRemarks();
-		int args = comment==null ? 1 : 2;
-		return new Object[] { args, name, comment };
+		String insertDefault = introspectedColumn.getProperties().getProperty("insert");
+		String updateDefault = introspectedColumn.getProperties().getProperty("update");
+		String javaProperty = introspectedColumn.getJavaProperty();
+		String jdbcTypeName = toJdbcTypeName(introspectedColumn);
+		return new Object[] { 
+				name, // 0 +3
+				comment==null ? 0 : 1, comment, // 1, 2 +3 
+				insertDefault==null ? 0 : 1, insertDefault, // 3, 4 +3
+				updateDefault==null ? 0 : 1, updateDefault, // 5, 6 +3
+				javaProperty, // 7 +3
+				jdbcTypeName // 8 +3
+			};
 	}
 
 	private Object[] args(IntrospectedTable introspectedTable, IntrospectedColumn introspectedColumn) {

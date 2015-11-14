@@ -1,5 +1,6 @@
 package org.mybatis.generator.plugins;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -8,7 +9,11 @@ import java.util.regex.Pattern;
 import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.PluginAdapter;
+import org.mybatis.generator.api.dom.java.FullyQualifiedJavaType;
+import org.mybatis.generator.api.dom.java.Method;
+import org.mybatis.generator.api.dom.java.TopLevelClass;
 import org.mybatis.generator.api.dom.xml.Attribute;
+import org.mybatis.generator.api.dom.xml.Document;
 import org.mybatis.generator.api.dom.xml.Element;
 import org.mybatis.generator.api.dom.xml.TextElement;
 import org.mybatis.generator.api.dom.xml.XmlElement;
@@ -48,7 +53,7 @@ public class LazybonesPlugin extends PluginAdapter {
 		for(Element child : element.getElements()) {
 			if(child instanceof TextElement) {
 				String content = ((TextElement)child).getContent();
-				boolean isDeleted = false;
+				boolean isProcessed = false;
 
 				Matcher m = PATTERN_SQLMAPS_PARAMETER.matcher(content);
 				
@@ -60,15 +65,37 @@ public class LazybonesPlugin extends PluginAdapter {
 					if(introspectedColumn != null) {
 						String defaultValue = introspectedColumn.getProperties().getProperty(propertyForReplace);
 						if(defaultValue != null) {
-							m.appendReplacement(sb, defaultValue);
+							final String leadingSpace = "      ";
+							StringBuilder replacement = new StringBuilder();
+							replacement.append('\n').append(leadingSpace).append("<if test=\"").append(javaProperty).append(" != null\"" ).append(">");
+							replacement.append('\n').append(leadingSpace).append("    ").append(m.group(0));
+							replacement.append('\n').append(leadingSpace).append("</if>");
+							replacement.append('\n').append(leadingSpace).append("<if test=\"").append(javaProperty).append(" == null\"" ).append(">");
+							replacement.append('\n').append(leadingSpace).append("    ").append(defaultValue);
+							replacement.append('\n').append(leadingSpace).append("</if>");
+							m.appendReplacement(sb, replacement.toString());
 						}
 						else if("update".equals(propertyForReplace)) {
 							String insertDefault = introspectedColumn.getProperties().getProperty("insert");
 							if(insertDefault != null) {
-								isDeleted = true;
+								// 업데이트 기본값이 지정되어 있지만, 등록시 기본값이 있다면, 기본값을 할당 하지 않도록 한다.
+								// 뭐 강제로 값이 할당되어 있으면, 할당하도록 해야지...
+								isProcessed = true;
+								
+								if(commentOutMode) {
+									TextElement newElement = new TextElement("<!-- " + content + " -->");
+									result.add(newElement);
+								}
+								else {
+									XmlElement newElement = new XmlElement("if");
+									newElement.addAttribute(new Attribute("test", javaProperty +" != null"));
+									newElement.addElement(new TextElement(content));
+									result.add(newElement);
+								}
 								break;
 							}
 							else {
+								// 업데이트시에 기본값이 할당되어 있어서, 이 값으로 대체 한다.
 								m.appendReplacement(sb, m.group(0));
 							}
 						}
@@ -78,16 +105,7 @@ public class LazybonesPlugin extends PluginAdapter {
 					}
 				}
 				
-				if(isDeleted) {
-					if(commentOutMode) {
-						TextElement newTextElement = new TextElement("<!-- " + content + " -->");
-						result.add(newTextElement);
-					}
-					else {
-						//
-					}
-				}
-				else {
+				if(!isProcessed) {
 					m.appendTail(sb);
 					content = sb.toString();
 					TextElement newTextElement = new TextElement(content);
@@ -200,5 +218,73 @@ public class LazybonesPlugin extends PluginAdapter {
 	public static Context getPluginContext() {
 		if(context == null) throw new IllegalStateException("context not initialized.");
 		return context;
+	}
+
+	@Override
+	public boolean sqlMapDocumentGenerated(Document document, IntrospectedTable introspectedTable) {
+		String namespace = introspectedTable.getTableConfiguration().getProperty("namespace");
+		if(namespace == null) {
+			String namespaceSearchString = context.getSqlMapGeneratorConfiguration().getProperty("namespaceSearchString");
+			if(namespaceSearchString != null) {
+				String namespaceReplaceString = context.getSqlMapGeneratorConfiguration().getProperty("namespaceReplaceString");
+				String a = getAttributeValue(document.getRootElement(), "namespace");
+				Matcher m = Pattern.compile(namespaceSearchString).matcher(a);
+				if(m.find()) {
+					namespace = m.replaceAll(namespaceReplaceString);
+				}
+			}
+		}
+		if(namespace != null) {
+			 XmlElement oldRoot = document.getRootElement();
+			 XmlElement newRoot = new XmlElement("mapper");
+			 newRoot.addAttribute(new Attribute("namespace", namespace));
+			 for(Element element : oldRoot.getElements()) {
+				 newRoot.addElement(element);
+			 };
+			 document.setRootElement(newRoot);
+		};
+		return true;
+	}
+
+	@Override
+	public boolean modelGetterMethodGenerated(Method method, TopLevelClass topLevelClass,
+			IntrospectedColumn introspectedColumn, IntrospectedTable introspectedTable, ModelClassType modelClassType) {
+		boolean setFinal = Boolean.valueOf(getProperties().getProperty("setFinal", "false"));
+		if(setFinal) method.setFinal(true);
+		return true;
+	}
+
+	@Override
+	public boolean modelSetterMethodGenerated(Method method, TopLevelClass topLevelClass,
+			IntrospectedColumn introspectedColumn, IntrospectedTable introspectedTable, ModelClassType modelClassType) {
+		boolean setFinal = Boolean.valueOf(getProperties().getProperty("setFinal", "false"));
+		if(setFinal) method.setFinal(true);
+		return true;
+	}
+
+	@Override
+	public boolean modelBaseRecordClassGenerated(TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
+		String impls = introspectedTable.getTableConfiguration().getProperty("implements");
+		if(impls != null) {
+			for(String i : impls.split(",")) {
+				String name = i.trim(); 
+				topLevelClass.addImportedType(name);
+				topLevelClass.addSuperInterface(new FullyQualifiedJavaType(name));
+				if(Serializable.class.getName().equals(name)) {
+					topLevelClass.addAnnotation("@SuppressWarnings(\"serial\")");
+				}
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public void initialized(IntrospectedTable introspectedTable) {
+		boolean useLowerActualColumnNames = Boolean.valueOf(getProperties().getProperty("useLowerActualColumnNames", "false"));
+		if(useLowerActualColumnNames) {
+			for(IntrospectedColumn c : introspectedTable.getAllColumns()) {
+				c.setJavaProperty(c.getActualColumnName().toLowerCase());
+			}
+		}
 	}
 }
