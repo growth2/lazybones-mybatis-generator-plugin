@@ -28,7 +28,7 @@
 		</jdbcConnection>
 
 		<javaTypeResolver >
-			<property name="forceBigDecimals" value="true" />
+			<property name="forceBigDecimals" value="false" />
 		</javaTypeResolver>
 
 		<javaModelGenerator targetPackage="com.myproject.model" targetProject="target">
