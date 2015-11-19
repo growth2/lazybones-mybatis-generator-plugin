@@ -10,6 +10,7 @@ import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.PluginAdapter;
 import org.mybatis.generator.api.dom.java.FullyQualifiedJavaType;
+import org.mybatis.generator.api.dom.java.Interface;
 import org.mybatis.generator.api.dom.java.Method;
 import org.mybatis.generator.api.dom.java.TopLevelClass;
 import org.mybatis.generator.api.dom.xml.Attribute;
@@ -286,5 +287,15 @@ public class LazybonesPlugin extends PluginAdapter {
 				c.setJavaProperty(c.getActualColumnName().toLowerCase());
 			}
 		}
+	}
+
+	@Override
+	public boolean clientGenerated(Interface interfaze, TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
+		boolean useRepositoryAnnotation = Boolean.valueOf(getProperties().getProperty("useRepositoryAnnotation", "false"));
+		if(useRepositoryAnnotation) {
+			interfaze.addImportedType(new FullyQualifiedJavaType("org.springframework.stereotype.Repository"));
+			interfaze.addAnnotation(String.format("@Repository(\"%s\")", interfaze.getType().getFullyQualifiedName()));
+		}
+		return true;
 	}
 }
