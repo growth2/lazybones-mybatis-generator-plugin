@@ -225,15 +225,8 @@ public class LazybonesPlugin extends PluginAdapter {
 	public boolean sqlMapDocumentGenerated(Document document, IntrospectedTable introspectedTable) {
 		String namespace = introspectedTable.getTableConfiguration().getProperty("namespace");
 		if(namespace == null) {
-			String namespaceSearchString = context.getSqlMapGeneratorConfiguration().getProperty("namespaceSearchString");
-			if(namespaceSearchString != null) {
-				String namespaceReplaceString = context.getSqlMapGeneratorConfiguration().getProperty("namespaceReplaceString");
-				String a = getAttributeValue(document.getRootElement(), "namespace");
-				Matcher m = Pattern.compile(namespaceSearchString).matcher(a);
-				if(m.find()) {
-					namespace = m.replaceAll(namespaceReplaceString);
-				}
-			}
+			String a = getAttributeValue(document.getRootElement(), "namespace");
+			namespace = replaceNamespace(a);
 		}
 		if(namespace != null) {
 			 XmlElement oldRoot = document.getRootElement();
@@ -294,8 +287,21 @@ public class LazybonesPlugin extends PluginAdapter {
 		boolean useRepositoryAnnotation = Boolean.valueOf(getProperties().getProperty("useRepositoryAnnotation", "false"));
 		if(useRepositoryAnnotation) {
 			interfaze.addImportedType(new FullyQualifiedJavaType("org.springframework.stereotype.Repository"));
-			interfaze.addAnnotation(String.format("@Repository(\"%s\")", interfaze.getType().getFullyQualifiedName()));
+			String repository = interfaze.getType().getFullyQualifiedName();
+			interfaze.addAnnotation(String.format("@Repository(\"%s\")", repository));
 		}
 		return true;
+	}
+	
+	private String replaceNamespace(String namespace) {
+		String namespaceSearchString = context.getSqlMapGeneratorConfiguration().getProperty("namespaceSearchString");
+		if(namespaceSearchString != null) {
+			String namespaceReplaceString = context.getSqlMapGeneratorConfiguration().getProperty("namespaceReplaceString");
+			Matcher m = Pattern.compile(namespaceSearchString).matcher(namespace);
+			if(m.find()) {
+				return m.replaceAll(namespaceReplaceString);
+			}
+		}
+		return namespace;
 	}
 }
