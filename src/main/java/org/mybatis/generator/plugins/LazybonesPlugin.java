@@ -280,6 +280,7 @@ public class LazybonesPlugin extends PluginAdapter {
 				c.setJavaProperty(c.getActualColumnName().toLowerCase());
 			}
 		}
+		introspectedTable.setRules(new LazybonesRules(introspectedTable.getRules(), getProperties()));
 	}
 
 	@Override
