@@ -68,14 +68,14 @@ public class LazybonesRules extends RulesDelegate {
 
 	@Override
 	public boolean generatePrimaryKeyClass() {
-		if(isUseLazybonesRules()) return false;
+//		if(isUseLazybonesRules()) return false;
 		Boolean generate = getRule("generatePrimaryKeyClass");
 		return generate != null ? generate : super.generatePrimaryKeyClass();
 	}
 
 	@Override
 	public boolean generateRecordWithBLOBsClass() {
-		if(isUseLazybonesRules()) return false;
+//		if(isUseLazybonesRules()) return false;
 		Boolean generate = getRule("generateRecordWithBLOBsClass");
 		return generate != null ? generate : super.generateRecordWithBLOBsClass();
 	}
