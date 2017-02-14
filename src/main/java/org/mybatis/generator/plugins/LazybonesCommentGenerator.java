@@ -26,7 +26,8 @@ import org.mybatis.generator.config.Context;
 import org.mybatis.generator.config.MergeConstants;
 import org.mybatis.generator.config.PropertyRegistry;
 import org.mybatis.generator.internal.DefaultCommentGenerator;
-import org.mybatis.generator.internal.db.ConnectionFactory;
+import org.mybatis.generator.internal.JDBCConnectionFactory;
+import org.mybatis.generator.internal.ObjectFactory;
 import org.mybatis.generator.logging.Log;
 import org.mybatis.generator.logging.LogFactory;
 
@@ -234,7 +235,9 @@ public class LazybonesCommentGenerator extends DefaultCommentGenerator implement
 		Context context = LazybonesPlugin.getPluginContext();
 		Connection c = null;
 		try {
-			c = ConnectionFactory.getInstance().getConnection(context.getJdbcConnectionConfiguration());
+			c = context.getJdbcConnectionConfiguration() != null
+					? new JDBCConnectionFactory(context.getJdbcConnectionConfiguration()).getConnection()
+					: ObjectFactory.createConnectionFactory(context).getConnection();
 			ResultSet rs = c.getMetaData().getTables(null, null, null, null);
 			while(rs.next()) {
 				String remarks = rs.getString("REMARKS");

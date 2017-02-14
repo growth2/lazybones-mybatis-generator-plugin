@@ -164,10 +164,8 @@ public class LazybonesPlugin extends PluginAdapter {
 		return true;
 	}
 
-	/**
-	 * 원래의 <if test="property != null"/>은 그대로 두고,
-	 * 아래쪽에 <if test="property == null"/> 조건으로 기본값을 삽입하도록 할것.
-	 */
+	// 원래의 <if test="property != null"/>은 그대로 두고,
+	// 아래쪽에 <if test="property == null"/> 조건으로 기본값을 삽입하도록 할것.
 	@Override
 	public boolean sqlMapInsertSelectiveElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
 		stripIfTagAndReplaceParameterWithDefault(element, introspectedTable, "insert");
