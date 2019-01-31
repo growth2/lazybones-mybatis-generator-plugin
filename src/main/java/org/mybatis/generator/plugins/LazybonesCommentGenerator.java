@@ -296,6 +296,10 @@ public class LazybonesCommentGenerator extends DefaultCommentGenerator implement
 		String name = introspectedColumn.getActualColumnName();
 		String comment = introspectedColumn.getRemarks();
 		String insertDefault = introspectedColumn.getProperties().getProperty("insert");
+		if(insertDefault == null) {
+			insertDefault = introspectedColumn.getDefaultValue();
+			if("NULL".equalsIgnoreCase(insertDefault)) insertDefault = null;
+		}
 		String updateDefault = introspectedColumn.getProperties().getProperty("update");
 		String javaProperty = introspectedColumn.getJavaProperty();
 		String jdbcTypeName = toJdbcTypeName(introspectedColumn);

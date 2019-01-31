@@ -1,6 +1,5 @@
 package org.mybatis.generator.plugins;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -64,8 +63,23 @@ public class LazybonesPlugin extends PluginAdapter {
 					
 					IntrospectedColumn introspectedColumn = findColumn(introspectedTable, javaProperty);
 					if(introspectedColumn != null) {
+						String dbmsDefault = introspectedColumn.getDefaultValue();
+						if("NULL".equalsIgnoreCase(dbmsDefault)) {
+							dbmsDefault = null;
+						}
+						
 						String defaultValue = introspectedColumn.getProperties().getProperty(propertyForReplace);
-						if(defaultValue != null) {
+						
+						if(dbmsDefault != null && defaultValue == null) {
+							final String leadingSpace = "      ";
+							StringBuilder replacement = new StringBuilder();
+							replacement.append('\n').append(leadingSpace).append("<if test=\"").append(javaProperty).append(" != null\"" ).append(">");
+							replacement.append('\n').append(leadingSpace).append("    <!-- default : ").append(dbmsDefault).append(" -->");
+							replacement.append('\n').append(leadingSpace).append("    ").append(m.group(0));
+							replacement.append('\n').append(leadingSpace).append("</if>");
+							m.appendReplacement(sb, replacement.toString());
+						}
+						else if(defaultValue != null) {
 							final String leadingSpace = "      ";
 							StringBuilder replacement = new StringBuilder();
 							replacement.append('\n').append(leadingSpace).append("<if test=\"").append(javaProperty).append(" != null\"" ).append(">");
@@ -254,25 +268,35 @@ public class LazybonesPlugin extends PluginAdapter {
 
 	@Override
 	public boolean modelBaseRecordClassGenerated(TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
-		String impls = introspectedTable.getTableConfiguration().getProperty("implements");
+		String impls = getProperty(introspectedTable, "implements");
 		if(impls != null) {
 			for(String i : impls.split(",")) {
 				String name = i.trim(); 
 				topLevelClass.addImportedType(name);
 				topLevelClass.addSuperInterface(new FullyQualifiedJavaType(name));
-				if(Serializable.class.getName().equals(name)) {
-					topLevelClass.addAnnotation("@SuppressWarnings(\"serial\")");
-				}
 			}
 		}
-		String superClass = introspectedTable.getTableConfiguration().getProperty("extends");
+		String superClass = getProperty(introspectedTable, "extends");
 		if(superClass != null) {
 			topLevelClass.addImportedType(superClass);
 			topLevelClass.setSuperClass(new FullyQualifiedJavaType(superClass));
 		}
+
+		String annotation = getProperty(introspectedTable, "annotation");
+		if(annotation != null) {
+			topLevelClass.addAnnotation(annotation);
+		}
 		return true;
 	}
-
+	
+	private String getProperty(IntrospectedTable introspectedTable, String propertyName) {
+		String value = introspectedTable.getTableConfiguration().getProperty(propertyName);
+		if(value == null) {
+			value = getProperties().getProperty(propertyName);
+		}
+		return value;
+	}
+	
 	@Override
 	public void initialized(IntrospectedTable introspectedTable) {
 		boolean useLowerActualColumnNames = Boolean.valueOf(getProperties().getProperty("useLowerActualColumnNames", "false"));
