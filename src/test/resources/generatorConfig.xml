@@ -1,67 +1,472 @@
 <?xml version="1.0" encoding="EUC-KR"?>
 <!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
-	"http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+"http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
 <generatorConfiguration>
-	<properties url="file:./src/test/resources/generatorConfig.properties"/>
-
 	<!--
-	http://mybatis.github.io/generator/configreference/xmlconfig.html
+	<a href="http://mybatis.github.io/generator/configreference/xmlconfig.html">MyBatis GeneratorXML Configuration File Reference</a>
 	-->
+
+	<properties url="file:./src/test/resources/database.properties"/>
 	
-	<context id="oracle" targetRuntime="MyBatis3">
-		<!-- http://mybatis.github.io/generator/configreference/commentGenerator.html -->
+	<context id="oracle" targetRuntime="MyBatis3" defaultModelType="flat">
+		<!--
+		Use this property to specify an encoding to use when working with Java files.
+		Newly generated Java files will be written to the file system in this encoding,
+		and existing Java files will be read with this encoding when performing a merge. 
+		If not specified, then the platform default encoding will be used.
+		-->
+		<property name="javaFileEncoding" value="UTF-8"/>
 		
 		<plugin type="org.mybatis.generator.plugins.LazybonesPlugin">
 			<property name="commentOut" value="true"/>
+			<property name="setFinal" value="true"/>
+			<property name="useRepositoryAnnotation" value="false"/>
+			<property name="useLazybonesRules" value="true"/>
+		    <property name="annotation" value="@SuppressWarnings(&quot;serial&quot;)"/>
 		</plugin>
 		
 		<commentGenerator type="org.mybatis.generator.plugins.LazybonesCommentGenerator">
-<!-- 			<property name="suppressDate" value="true" /> -->
+			<property name="suppressDate" value="true" />
 		</commentGenerator>
 
 		<!-- http://mybatis.github.io/generator/configreference/jdbcConnection.html -->
-		<jdbcConnection driverClass="${jdbc.driver}"
+		<jdbcConnection driverClass="${jdbc.driverClassName}"
 			connectionURL="${jdbc.url}"
 			userId="${jdbc.username}"
 			password="${jdbc.password}">
-			<property name="remarksReporting" value="true"/>
+			<!--
+			true if getTables() and getColumns() should report TABLE_REMARKS;
+			equivalent to using setRemarksReporting(). The default value is false. 
+			-->
+			<property name="useInformationSchema" value="true"/>
 		</jdbcConnection>
 
-		<javaTypeResolver >
-			<property name="forceBigDecimals" value="false" />
-		</javaTypeResolver>
 
-		<javaModelGenerator targetPackage="com.myproject.model" targetProject="target">
+		<!-- javaTypeResolver type="org.mybatis.generator.plugins.LazybonesJavaTypeResolver"/ -->
+
+		<javaModelGenerator targetPackage="com.apw.web.dto.generated" targetProject="target">
 			<property name="enableSubPackages" value="false" />
+			<!--
+			This property is used to select whether MyBatis Generator adds code to trim the white space from character fields returned from the database.
+			This can be useful if your database stores data in CHAR fields rather than VARCHAR fields.
+			When true, MyBatis Generator will insert code to trim character fields.
+			The default value is false.
+			 -->
 			<property name="trimStrings" value="true" />
 		</javaModelGenerator>
 
-		<sqlMapGenerator targetPackage="com.myproject.xml"  targetProject="target">
+		<sqlMapGenerator targetPackage="com.apw.web.dao.generated"  targetProject="target">
 			<property name="enableSubPackages" value="false" />
+			<property name="namespaceSearchString" value="\.generated\.dao\.Abstract" />
+			<property name="namespaceReplaceString" value="\.dao\." />
 		</sqlMapGenerator>
 
-		<javaClientGenerator type="XMLMAPPER" targetPackage="com.myproject.dao"  targetProject="target">
+		<!-- 
+			javaClientGenerator의 targetPackage가 sqlMapGenerator의 것과 다르게 설정하는 이유는
+			java Mapper 를 스캔할 때 하위디렉터리의 Abstract*Mapper가 Scan 되지 않도록 하기 위함.
+		-->
+		<javaClientGenerator type="XMLMAPPER" targetPackage="com.apw.web.generated.dao" targetProject="target">
 			<property name="enableSubPackages" value="false" />
 		</javaClientGenerator>
-
-		<table tableName="MS_SEND_MESSAGE" domainObjectName="SendMessage">
-			<generatedKey column="SEND_MESSAGE_ID" sqlStatement="SELECT SEQ_PT_SCOURT_ISSUE_HIST.NEXTVAL FROM DUAL"/>
-			<columnOverride column="SEND_MESSAGE_ID" property="identifier" />
-			<columnOverride column="SENDER_CE_ADDR" property="sender" />
-			<columnOverride column="RECEIVER_CE_ADDR" property="receiver" />
-			<columnOverride column="RETRY_CNT" javaType="Integer" />
-			<columnOverride column="FILE_SIZE" javaType="Long"/>
-			
-			<columnOverride column="REG_DATE">
-				<property name="insert" value="systimestamp"/>
+		
+		<!-- TB_ATTACH_FILE -->
+		<table tableName="tb_attach_file" domainObjectName="AbstractAttachFile">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="FILE_SEQ" sqlStatement="SELECT TB_ATTACH_FILE_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
 			</columnOverride>
-			<columnOverride column="UPDATE_DATE">
-				<property name="insert" value="systimestamp"/>
-				<property name="update" value="systimestamp"/>
+		</table>
+		
+		<!-- TB_CODE -->
+		<table tableName="tb_code" domainObjectName="AbstractCode">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="CD_SEQ" sqlStatement="SELECT TB_CODE_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
 			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>
+		</table>
 
-			<columnOverride column="INBOX_SEQ" javaType="java.math.RoundingMode" typeHandler="org.apache.ibatis.type.EnumOrdinalTypeHandler"/>
+		<!-- TB_CUSTOM -->
+		<table tableName="tb_custom" domainObjectName="AbstractCustom">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="CUST_SEQ" sqlStatement="SELECT TB_CUSTOM_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+
+		<!-- TB_DATA -->
+		<table tableName="TB_DATA" domainObjectName="AbstractData">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<columnOverride column="RECV_SEQ" javaType="Long" />
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="STATUS_CD">
+				<property name="insert" value="'T'" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>
+		</table>
+
+		<!-- TB_DATA_DETAIL -->
+		<table tableName="TB_DATA_DETAIL" domainObjectName="AbstractDataDetail">
+            <property name="implements" value="java.io.Serializable"/>
+			<columnOverride column="RECV_SEQ" javaType="Long" />
+		</table>
+		
+		<!-- TB_DATA_PREVIEW -->
+		<table tableName="TB_DATA_SAMPLE_TEST" domainObjectName="AbstractDataSampleTest">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="SMPL_SEQ" sqlStatement="SELECT TB_DATA_SAMPLE_TEST_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>
+		</table>
+		
+		<!-- TB_DEPT -->
+		<table tableName="tb_dept" domainObjectName="AbstractDept">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+			<columnOverride column="USE_YN">
+				<property name="insert" value="'Y'" />
+			</columnOverride>
+			<columnOverride column="DISPLAY_YN">
+				<property name="insert" value="'Y'" />
+			</columnOverride>
+		</table>
+
+		<!-- TB_ENVIRONMENT -->
+		<table tableName="TB_ENVIRONMENT" domainObjectName="AbstractEnvironment">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="ENV_SEQ" sqlStatement="SELECT TB_ENVIRONMENT_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="ENV_SEQ" javaType="Long" />
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+
+		<!-- TB_IP_ACCESS_LIST -->
+		<table tableName="TB_IP_ACCESS_LIST" domainObjectName="AbstractIPAccessList">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="IPACL_SEQ" sqlStatement="SELECT TB_IP_ACCESS_LIST_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+
+		<!-- TB_MAIN_CODE -->
+		<table tableName="tb_main_code" domainObjectName="AbstractMainCode">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="MAIN_CD_SEQ" sqlStatement="SELECT TB_MAIN_CODE_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="MAIN_CD_SEQ" javaType="Integer" />
+			<columnOverride column="CD_LENGTH" javaType="Integer" />
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+
+		<!-- TB_MENU -->
+		<table tableName="TB_MENU" domainObjectName="AbstractMenu">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<property name="implements" value="java.io.Serializable"/>
+			<generatedKey column="MENU_ID" sqlStatement="SELECT TB_MENU_SEQ.NEXTVAL FROM DUAL"/>
+		</table>
+
+		<!-- TB_MENU_ROLE -->
+		<table tableName="TB_MENU_ROLE" domainObjectName="AbstractMenuRole">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<property name="implements" value="java.io.Serializable"/>
+			<generatedKey column="MENU_ROLE_ID" sqlStatement="SELECT TB_MENU_ROLE_ID.NEXTVAL FROM DUAL"/>
+		</table>
+		
+		<!-- TB_RECV_DATA -->
+		<table tableName="TB_RECV_DATA" domainObjectName="AbstractRecvData">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+<!-- 			<property name="implements" value="com.apw.web.dto.JobStatus"/> -->
+			<generatedKey column="RECV_SEQ" sqlStatement="SELECT TB_RECV_DATA_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="APPR_YN">
+				<property name="insert" value="'N'" />
+			</columnOverride>
+			<columnOverride column="STATUS_CD" javaType="com.apw.web.dto.RecvData.RecvStatus" typeHandler="com.apw.common.mybatis.EnumStringTypeHandler"/>
+			<columnOverride column="JS_CODE" javaType="com.apw.web.dto.JobStatus.JsCode" typeHandler="com.apw.common.mybatis.EnumStringTypeHandler"/>
+			<columnOverride column="JS_STATUS" javaType="com.apw.web.dto.JobStatus.JsStatus" typeHandler="com.apw.common.mybatis.EnumStringTypeHandler"/>
+		</table>		
+
+		<!-- TB_RECV_DATA -->
+		<table tableName="TB_RECV_DATA_CNT" domainObjectName="AbstractRecvDataCnt">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+<!-- 			<property name="implements" value="com.apw.web.dto.JobStatus"/> -->
+<!-- 			<generatedKey column="RECV_SEQ" sqlStatement="SELECT TB_RECV_DATA_SEQ.NEXTVAL FROM DUAL"/> -->
+<!-- 			<columnOverride column="REG_DT"> -->
+<!-- 				<property name="insert" value="SYSTIMESTAMP" /> -->
+<!-- 			</columnOverride> -->
+<!-- 			<columnOverride column="MOD_DT"> -->
+<!-- 				<property name="insert" value="SYSTIMESTAMP" /> -->
+<!-- 				<property name="update" value="SYSTIMESTAMP" /> -->
+<!-- 			</columnOverride> -->
+<!-- 			<columnOverride column="APPR_YN"> -->
+<!-- 				<property name="insert" value="'N'" /> -->
+<!-- 			</columnOverride> -->
+<!-- 			<columnOverride column="STATUS_CD" javaType="com.apw.web.dto.RecvData.RecvStatus" typeHandler="com.apw.common.mybatis.EnumStringTypeHandler"/> -->
+<!-- 			<columnOverride column="JS_CODE" javaType="com.apw.web.dto.JobStatus.JsCode" typeHandler="com.apw.common.mybatis.EnumStringTypeHandler"/> -->
+<!-- 			<columnOverride column="JS_STATUS" javaType="com.apw.web.dto.JobStatus.JsStatus" typeHandler="com.apw.common.mybatis.EnumStringTypeHandler"/> -->
+		</table>		
+
+		<!-- TB_REPORT -->
+		<table tableName="tb_report" domainObjectName="AbstractReport">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="RPT_SEQ" sqlStatement="SELECT TB_REPORT_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>					
+		</table>
+
+		<!-- TB_REPORT_GROUP -->
+		<table tableName="tb_report_group" domainObjectName="AbstractReportGroup">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="GRP_SEQ" sqlStatement="SELECT TB_REPORT_GROUP_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+		
+		<!-- TB_REPORT_VIEW_HIST -->
+		<table tableName="TB_REPORT_VIEW_HIST" domainObjectName="AbstractReportViewHist">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="HIST_SEQ" sqlStatement="SELECT TB_REPORT_VIEW_HIST_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="VIEW_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+
+		<!-- TB_ROLE -->
+		<table tableName="TB_ROLE" domainObjectName="AbstractRole">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="ROLE_ID" sqlStatement="SELECT TB_ROLE_ID.NEXTVAL FROM DUAL"/>
+		</table>
+
+		<!-- TB_SCHEDULER -->
+		<table tableName="TB_SCHEDULER" domainObjectName="AbstractScheduler">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+
+		<!-- TB_SCHEMA -->
+		<table tableName="tb_schema" domainObjectName="AbstractSchema">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+<!-- 			<columnOverride column="SUB_SEQ" javaType="Integer" /> -->
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+			<columnOverride column="HIDDEN_YN">
+				<property name="insert" value="'N'" />
+			</columnOverride>			
+		</table>
+		
+		<!-- TB_SCHEMA_DETAIL -->
+		<table tableName="TB_SCHEMA_DETAIL" domainObjectName="AbstractSchemaDetail">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+<!-- 			<columnOverride column="SUB_SEQ" javaType="Integer" /> -->
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+
+		<!-- TB_SCHEMA_OLD -->
+		
+		<!-- TB_SEND_DATA -->
+		<table tableName="tb_send_data" domainObjectName="AbstractSendData">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="SND_SEQ" sqlStatement="SELECT TB_SEND_DATA_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="RSV_YN">
+				<property name="insert" value="'N'" />
+			</columnOverride>
+			<columnOverride column="STATUS_CD">
+				<property name="insert" value="'WT'" />
+			</columnOverride>
+			<columnOverride column="RECV_SEQ" javaType="Long" />
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+	
+		<!-- TB_SEND_DATA_CNT -->
+		<table tableName="TB_SEND_DATA_CNT" domainObjectName="AbstractSendDataCnt">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="SND_SEQ" sqlStatement="SELECT TB_SEND_DATA_CNT_SEQ.NEXTVAL FROM DUAL"/>
+		</table>
+	
+		<!-- TB_SEND_FILE -->
+		<table tableName="tb_send_file" domainObjectName="AbstractSendFile">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="FILE_SEQ" sqlStatement="SELECT TB_SEND_FILE_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+		</table>
+		
+		<!-- TB_SEND_MESSAGE -->
+		<table tableName="tb_send_message" domainObjectName="AbstractSendMessage">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="MSG_SEQ" sqlStatement="SELECT TB_SEND_MESSAGE_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+
+		<!-- TB_SEND_MESSAGE_RE -->
+		<table tableName="TB_SEND_MESSAGE_RE" domainObjectName="AbstractSendMessageRe">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="RE_MSG_SEQ" sqlStatement="SELECT TB_SEND_MESSAGE_RE_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="MOD_DT">
+				<property name="update" value="SYSDATE" />
+			</columnOverride>			
+		</table>
+		
+		<!-- TB_SYSTEM_LOG -->
+		<table tableName="TB_SYSTEM_LOG" domainObjectName="AbstractSystemLog">
+ 			<property name="extends" value="com.apw.web.dto.CommonVo"/> 
+			<property name="implements" value="java.io.Serializable"/>
+			<generatedKey column="LOG_SEQ" sqlStatement="SELECT TB_SYSTEM_LOG_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="EVENT_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+		</table>
+
+		<!-- TB_TAG_FUNCTION -->
+		<table tableName="TB_TAG_FUNCTION" domainObjectName="AbstractTagFunction">
+ 			<property name="extends" value="com.apw.web.dto.CommonVo"/> 
+			<property name="implements" value="java.io.Serializable"/>
+			<generatedKey column="FUNC_SEQ" sqlStatement="SELECT TB_TAG_FUNCTION_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+		
+		<!-- TB_TEMPLATE -->
+		<table tableName="tb_template" domainObjectName="AbstractTemplate">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<generatedKey column="TPL_SEQ" sqlStatement="SELECT TB_TEMPLATE_SEQ.NEXTVAL FROM DUAL"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+		
+		<!-- TB_TEMPLATE_RESOURCE -->
+		<table tableName="TB_TEMPLATE_RESOURCE" domainObjectName="AbstractTemplateResource">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+		
+		<!-- TB_UNSUBSCRIBE -->
+		<table tableName="TB_UNSUBSCRIBE" domainObjectName="AbstractUnSubscribe">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
+		</table>
+		
+		<!-- TB_USER -->		
+		<table tableName="tb_user" domainObjectName="AbstractUser">
+			<property name="extends" value="com.apw.web.dto.CommonVo"/>
+			<columnOverride column="REG_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+			</columnOverride>
+			<columnOverride column="MOD_DT">
+				<property name="insert" value="SYSTIMESTAMP" />
+				<property name="update" value="SYSTIMESTAMP" />
+			</columnOverride>			
 		</table>
 	</context>
+
 </generatorConfiguration>
 

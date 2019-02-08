@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.growth2</groupId>
 	<artifactId>lazybones-mybatis-generator-plugin</artifactId>
-	<version>0.0.4</version>
+	<version>0.0.5</version>
 	<name>lazybones mybatis-generator plugin</name>
 	<description>enhaned mybatis-generator plugin</description>
 	<url>https://github.com/growth2/lazybones-mybatis-generator-plugin</url>
@@ -167,7 +167,7 @@
 				<plugin>
 					<groupId>com.github.growth2</groupId>
 					<artifactId>lazybones-mybatis-generator-plugin</artifactId>
-					<version>0.0.3</version>
+					<version>0.0.5</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -178,5 +178,11 @@
 			<artifactId>mybatis-generator-core</artifactId>
 			<version>${mybatis.generator.version}</version>
 		</dependency>
+<!-- 	<dependency> -->
+<!-- 		<groupId>com.tmax</groupId> -->
+<!-- 		<artifactId>tibero</artifactId> -->
+<!-- 		<version>6.0</version> -->
+<!-- 		<scope>test</scope> -->
+<!-- 	</dependency> -->
 	</dependencies>
 </project>
